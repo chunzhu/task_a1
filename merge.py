@@ -10,4 +10,4 @@ print(result['Close'].pct_change())
 
 result = pd.concat((result, result['Close'].pct_change().rename('pct_change')), axis=1)
 result = pd.concat((result, result['Close_hk'].pct_change().rename('pct_change_hk')), axis=1)
-result.to_csv("merge.csv")
+result.to_csv("merge.csv",index=False)
