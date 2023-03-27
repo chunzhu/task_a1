@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<!-- Load d3.js -->
+<head>
+    <style>
+        .bar {
+            fill: steelblue;
+        }
+    </style>
+<script src="https://d3js.org/d3.v4.js"></script>
+</head>
+<!-- Create a div where the graph will take place -->
+<div id="my_dataviz"></div>
+<div id="my_dataviz1"></div>
+<script>
+
+// set the dimensions and margins of the graph
+var margin = {top: 10, right: 30, bottom: 30, left: 60},
+    width = 460 - margin.left - margin.right,
+    height = 400 - margin.top - margin.bottom;
+
+var xScale = d3.scaleBand().range ([0, width]).padding(0.4),
+    yScale = d3.scaleLinear().range ([height, 0]);
+
+var xScale1 = d3.scaleBand().range ([0, width]).padding(0.4),
+    yScale1 = d3.scaleLinear().range ([height, 0]);
+
+// append the svg object to the body of the page
+var svg = d3.select("#my_dataviz")
+  .append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform",
+          "translate(" + margin.left + "," + margin.top + ")");
+
+var svg1 = d3.select("#my_dataviz1")
+  .append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform",
+          "translate(" + margin.left + "," + margin.top + ")");
+
+data = d3.csv("https://raw.githubusercontent.com/chunzhu/task_a1/main/C6L.SI.csv",
+    (data) => {
+        //console.log(data)
+        return {
+            
+            'date': data.Date,
+            'open': parseFloat(data.Open),
+            'high': parseFloat(data.High),
+            'low': parseFloat(data.Low),
+            'close': parseFloat(data.Close),
+            // data.Adj Close,
+            'volume': parseInt(data.Volume)
+        }
+    },
+        (error, rows) => {
+
+            lastFewDaysVolume = rows.filter( d => { if (d.date == '2023-03-24' || d.date=='2023-03-23' || d.date=='2023-03-22' || d.date=='2023-03-21' || d.date=='2023-03-20') {
+            //lastFewDaysVolume = rows.filter( d => { if (d.date > selectedDate) {
+                return d
+            }})
+            xScale.domain(lastFewDaysVolume.map(function(d) { return d.date; }));
+            yScale.domain([0, d3.max(lastFewDaysVolume, function(d) { return d.volume; })]);
+
+            svg.append("g")
+            .attr("transform", "translate(0," + height + ")")
+            .call(d3.axisBottom(xScale));
+
+            svg.append("g")
+            .call(d3.axisLeft(yScale).tickFormat(function(d){
+                return (d/1000000).toFixed(1);
+            }).ticks(10))
+
+
+            svg.selectAll(".bar")
+            .data(lastFewDaysVolume)
+            .enter().append("rect")
+            .attr("class", "bar")
+            .attr("x", function(d) { return xScale(d.date); })
+            .attr("y", function(d) { return yScale(d.volume); })
+            .attr("width", xScale.bandwidth())
+            .attr("height", function(d) { return height - yScale(d.volume); });
+
+            var line_values = rows.filter(d => !(isNaN(d.close)))
+            console.log(lastFewDaysVolume)
+
+
+
+    })          
+
+data = d3.csv("https://raw.githubusercontent.com/chunzhu/task_a1/main/C6L.SI.csv",
+    (data) => {
+        //console.log(data)
+        return {
+            
+            'date': new Date(data.Date),
+            'open': parseFloat(data.Open),
+            'high': parseFloat(data.High),
+            'low': parseFloat(data.Low),
+            'close': parseFloat(data.Close),
+            // data.Adj Close,
+            'volume': parseInt(data.Volume)
+        }
+    },
+        (error, rows) => {
+            
+
+            // find data range
+            const xMin = d3.min(rows, d => {
+            return d['date'];
+            });
+            const xMax = d3.max(rows, d => {
+            return d['date'];
+            });
+            const yMin = d3.min(rows, d => {
+            return d['close'];
+            });
+            const yMax = d3.max(rows, d => {
+            return d['close'];
+            });
+            // scales for the charts
+            const xScale1 = d3
+            .scaleTime()
+            .domain([xMin, xMax])
+            .range([0, width]);
+            const yScale1 = d3
+            .scaleLinear()
+            .domain([yMin , yMax])
+            .range([height, 0]);
+
+            svg1.append("g")
+            .attr("transform", "translate(0," + height + ")")
+            .call(d3.axisBottom(xScale1).ticks(d3.timeMonth, 2).tickFormat(d3.timeFormat('%b%y')));
+
+            svg1.append("g")
+            .call(d3.axisLeft(yScale1).tickFormat(d => '$' +d.toFixed(1)));
+
+            // Add the line
+            svg1.append("path")
+            .datum(rows)
+            .attr("fill", "none")
+            .attr("stroke", "steelblue")
+            .attr("stroke-width", 1.5)
+            .attr("d", d3.line()
+                .x(function(d) {  
+                    return xScale1(d['date']) })
+                .y(function(d) { 
+                    return yScale1(d['close']) })
+                )
+
+    })
+
+</script>
