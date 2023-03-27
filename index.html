@@ -154,12 +154,18 @@ data = d3.csv("https://raw.githubusercontent.com/chunzhu/task_a1/main/C6L.SI.csv
 
     })
 
-    d3.queue()
-    .defer(d3.csv, "https://raw.githubusercontent.com/chunzhu/task_a1/main/C6L.SI.csv")
-    .defer(d3.csv, "https://raw.githubusercontent.com/chunzhu/task_a1/main/0293.HK.csv")
-    .await(function(error, C6L, HK0293) {
-    if (error) throw error;
-        console.log(HK0293)
-    });
-
+    data = d3.csv("https://raw.githubusercontent.com/chunzhu/task_a1/main/merge.csv",
+    (data) => {
+        console.log(data)
+        return {
+            
+            'date': new Date(data.Date),
+            'close': parseFloat(data.pct_change),
+            'hk_close': parseInt(data.pct_change_hk)
+        }
+    },
+    (error, rows) => {
+        console.log(rows)
+    }
+    )
 </script>
