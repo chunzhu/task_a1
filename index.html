@@ -13,10 +13,11 @@
 <!-- Create a div where the graph will take place -->
 <div id="my_dataviz"></div>
 <div id="my_dataviz1"></div>
+<div id="my_dataviz2"></div>
 <script>
 
 // set the dimensions and margins of the graph
-var margin = {top: 10, right: 30, bottom: 30, left: 60},
+var margin = {top: 60, right: 30, bottom: 60, left: 60},
     width = 460 - margin.left - margin.right,
     height = 400 - margin.top - margin.bottom;
 
@@ -35,7 +36,16 @@ var svg = d3.select("#my_dataviz")
     .attr("transform",
           "translate(" + margin.left + "," + margin.top + ")");
 
+
 var svg1 = d3.select("#my_dataviz1")
+  .append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform",
+          "translate(" + margin.left + "," + margin.top + ")");
+
+var svg2 = d3.select("#my_dataviz2")
   .append("svg")
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom)
@@ -88,7 +98,31 @@ data = d3.csv("https://raw.githubusercontent.com/chunzhu/task_a1/main/C6L.SI.csv
             var line_values = rows.filter(d => !(isNaN(d.close)))
             console.log(lastFewDaysVolume)
 
+            svg.append("text")
+            .attr("x", (width / 2))             
+            .attr("y", 0 - (margin.top / 2))
+            .attr("text-anchor", "middle")  
+            .style("font-size", "16px") 
+            .style("text-decoration", "underline")  
+            .text("What are the trading volumes from 20 Mar to 24 Mar 2023?")    
 
+            svg.append("text")
+            .attr("class", "x label")
+            .attr("text-anchor", "middle")
+            .attr("x", width/2)
+            .attr("y", height + 30)
+            .text("Trading Date")
+            .style("font-size", "12px") ;   
+
+            svg.append("text")
+            .attr("class", "y label")
+            .attr("text-anchor", "middle")
+            .attr("y", -50)
+            .attr("x",-1 * width /2)
+            .attr("dy", ".75em")
+            .attr("transform", "rotate(-90)")
+            .text("Trading Volume (in millions)")
+            .style("font-size", "12px") ;    
 
     })          
 
@@ -151,6 +185,33 @@ data = d3.csv("https://raw.githubusercontent.com/chunzhu/task_a1/main/C6L.SI.csv
                 .y(function(d) { 
                     return yScale1(d['close']) })
                 )
+            svg1.append("text")
+            .attr("x", (width / 2))             
+            .attr("y", 0 - (margin.top / 2))
+            .attr("text-anchor", "middle")  
+            .style("font-size", "16px") 
+            .style("text-decoration", "underline")  
+            .text("Where is the price heading toward?")    
+
+            svg1.append("text")
+            .attr("class", "x label")
+            .attr("text-anchor", "middle")
+            .attr("x", width/2)
+            .attr("y", height + 30)
+            .text("Trading Date")
+            .style("font-size", "12px") ;   
+
+            svg1.append("text")
+            .attr("class", "y label")
+            .attr("text-anchor", "middle")
+            .attr("y", -50)
+            .attr("x",-1 * width /2)
+            .attr("dy", ".75em")
+            .attr("transform", "rotate(-90)")
+            .text("$ SGD")
+            .style("font-size", "12px") ;    
+
+
 
     })
 
@@ -159,13 +220,79 @@ data = d3.csv("https://raw.githubusercontent.com/chunzhu/task_a1/main/C6L.SI.csv
         console.log(data)
         return {
             
-            'date': new Date(data.Date),
-            'close': parseFloat(data.pct_change),
-            'hk_close': parseInt(data.pct_change_hk)
+            'date': data.Date,
+            'pct_change': parseFloat(data.pct_change) * 100,
+            'pct_change_hk': parseFloat(data.pct_change_hk) * 100
         }
     },
     (error, rows) => {
-        console.log(rows)
+        data = rows.filter( d =>  !isNaN(d.pct_change) && !isNaN(d.pct_change_hk))
+        console.log(data)
+        // find data range
+        const xMin = d3.min(data, d => {
+        return d['pct_change'];
+        });
+        const xMax = d3.max(data, d => {
+        return d['pct_change'];
+        });
+        const yMin = d3.min(data, d => {
+        return d['pct_change_hk'];
+        });
+        const yMax = d3.max(data, d => {
+        return d['pct_change_hk'];
+        });
+
+
+        var x2 = d3.scaleLinear()
+            .domain([xMin, xMax])
+            .range([ 0, width ]);
+        svg2.append("g")
+            .attr("transform", "translate(0," + height + ")")
+            .call(d3.axisBottom(x2));
+
+        // Add Y axis
+        console.log(yMax)
+        var y2 = d3.scaleLinear()
+            .domain([yMin, yMax])
+            .range([ height, 0]);
+        svg2.append("g")
+            .call(d3.axisLeft(y2).tickFormat(d => d.toFixed(1) ));
+
+        // Add dots
+        svg2.append('g')
+            .selectAll("dot")
+            .data(data)
+            .enter()
+            .append("circle")
+            .attr("cx", function (d) { return x2(d.pct_change); } )
+            .attr("cy", function (d) { return y2(d.pct_change_hk); } )
+            .attr("r", 1.5)
+            .style("fill", "#69b3a2")
+        svg2.append("text")
+            .attr("x", (width / 2))             
+            .attr("y", 0 - (margin.top / 2))
+            .attr("text-anchor", "middle")  
+            .style("font-size", "16px") 
+            .style("text-decoration", "underline")  
+            .text("SQ vs Cathay Pacific Airline daily price % change")    
+        
+        svg2.append("text")
+            .attr("class", "x label")
+            .attr("text-anchor", "middle")
+            .attr("x", width/2)
+            .attr("y", height + 30)
+            .text("Daily % Change in SQ Share price")
+            .style("font-size", "12px") ;   
+
+        svg2.append("text")
+            .attr("class", "y label")
+            .attr("text-anchor", "middle")
+            .attr("y", -50)
+            .attr("x",-1 * width /2)
+            .attr("dy", ".75em")
+            .attr("transform", "rotate(-90)")
+            .text("Daily % Change in Cathay Pacific Share price")
+            .style("font-size", "12px") ;    
     }
     )
 </script>
